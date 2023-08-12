@@ -3,6 +3,10 @@
 ##  AWS RDS - PostgreSQL
 ##
 
+locals {
+  postgres_port = 5432
+}
+
 resource aws_db_instance this {
   allocated_storage      = 20
   db_subnet_group_name   = aws_db_subnet_group.this.name
@@ -14,6 +18,7 @@ resource aws_db_instance this {
   storage_type           = "gp3"
   username               = "postgres"
   password               = random_password.rds.result
+  port                   = local.postgres_port
   skip_final_snapshot    = true
   vpc_security_group_ids = [aws_security_group.rds.id]
 }
@@ -32,17 +37,23 @@ resource aws_security_group rds {
   vpc_id = aws_vpc.this.id
 
   ingress {
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port       = local.postgres_port
+    to_port         = local.postgres_port
+    protocol        = "tcp"
+    security_groups = [
+      aws_security_group.bastian.id,
+      aws_security_group.server.id,
+    ]
   }
 
   egress {
     from_port       = 0
     to_port         = 0
     protocol        = -1
-    cidr_blocks     = ["0.0.0.0/0"]
+    security_groups = [
+      aws_security_group.bastian.id,
+      aws_security_group.server.id,
+    ]
   }
 
   tags = {
@@ -54,9 +65,12 @@ resource aws_security_group rds {
 ##  password
 
 resource random_password rds {
-  length      = 12
+  length = 12
+
   min_lower   = 2
   min_numeric = 2
   min_special = 2
   min_upper   = 2
+
+  override_special = "!#$%&*()-_=+[]{}<>:?"
 }

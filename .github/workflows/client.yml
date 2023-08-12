@@ -9,7 +9,11 @@ on:
 
 jobs:
   build:
+    if: vars.ENABLE_GITHUB_ACTIONS == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     env:
       WORKDIR: ./client
 
@@ -45,9 +49,9 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
-        aws-access-key-id: ${{ vars.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ vars.AWS_REGION }}
+        role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+        role-session-name: github-actions-${{ vars.PROJECT_NAME }}-server
 
     - name: Login to AWS ECR
       id:   ecr
@@ -57,7 +61,7 @@ jobs:
       id:   meta
       uses: docker/metadata-action@v4
       with:
-        images: ${{ steps.ecr.outputs.registry }}/client
+        images: ${{ steps.ecr.outputs.registry }}/${{ vars.PROJECT_NAME }}-client
         tags: |
           type=sha,prefix=,suffix=-{{date 'YYYYMMDD-HHmmss' tz='Asia/Seoul'}}
         flavor: |
@@ -74,7 +78,7 @@ jobs:
     - name: Get AWS ECS task definition
       run:  |
         aws ecs describe-task-definition \
-            --task-definition finpc-client \
+            --task-definition ${{ vars.PROJECT_NAME }}-client \
             --query taskDefinition > task-definition.json
       working-directory: ${{ env.WORKDIR }}
 
@@ -91,5 +95,5 @@ jobs:
       with:
         task-definition: ${{ steps.task-def.outputs.task-definition }}
         service: client
-        cluster: finpc
+        cluster: ${{ vars.PROJECT_NAME }}
         wait-for-service-stability: true

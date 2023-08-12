@@ -25,16 +25,27 @@ variable cidr_block {
   default = "10.0.0.0/16"
 }
 
-variable aws_dns_profile {
-  type    = string
-  default = "default"
+variable github_token {
+  type      = string
+  sensitive = true
 }
 
-variable root_domain {
-  type    = string
-  default = "ultary.in"
+variable github_debug_actions {
+  type    = bool
+  default = false
 }
 
-variable host_prefix {
-  type = string
+variable github_enable_actions {
+  type    = bool
+  default = true
+}
+
+variable github_org {
+  type    = string
+  default = "ghilbut"
+}
+
+variable github_repository {
+  type    = string
+  default = "finpc-example"
 }

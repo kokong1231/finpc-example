@@ -12,7 +12,9 @@ locals {
 ##
 
 resource aws_ecr_repository server {
-  name = local.server_name
+  name = "${var.project}-${local.server_name}"
+
+  force_delete = true
 
   image_scanning_configuration {
     scan_on_push = true
@@ -145,17 +147,17 @@ resource aws_security_group server {
   vpc_id      = aws_vpc.this.id
 
   ingress {
-    from_port   = local.rest_port
-    to_port     = local.rest_port
-    protocol    = "tcp"
-    cidr_blocks = values(aws_subnet.private).*.cidr_block
+    from_port       = local.rest_port
+    to_port         = local.rest_port
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
   }
 
   ingress {
-    from_port   = local.grpc_port
-    to_port     = local.grpc_port
-    protocol    = "tcp"
-    cidr_blocks = values(aws_subnet.private).*.cidr_block
+    from_port       = local.grpc_port
+    to_port         = local.grpc_port
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
   }
 
   egress {
