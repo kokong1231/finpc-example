@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    if: vars.ENABLE_GITHUB_ACTIONS == 'true'
+    if: vars.ACTIONS_ENABLE == 'true'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
