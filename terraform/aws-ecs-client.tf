@@ -76,12 +76,20 @@ resource aws_ecs_task_definition client {
           {
             "name": "GRPC_PORT",
             "value": "${local.grpc_port}"
+          },
+          {
+            "name": "SENTRY_ENVIRONMENT",
+            "value": "ecs"
           }
         ],
         "secrets": [
           {
             "name": "GRPC_CACERT",
             "valueFrom": "${aws_secretsmanager_secret.grpc_cacert.arn}"
+          },
+          {
+            "name": "SENTRY_DSN",
+            "valueFrom": "${aws_secretsmanager_secret.sentry_client_dsn.arn}"
           }
         ],
         "portMappings": [
@@ -97,7 +105,7 @@ resource aws_ecs_task_definition client {
             "awslogs-datetime-format": "[%Y-%m-%d %H:%M:%S]",
             "awslogs-group":           "${aws_cloudwatch_log_group.this.name}",
             "awslogs-region":          "${var.aws_region}",
-            "awslogs-stream-prefix":   "client"
+            "awslogs-stream-prefix":   "ecs"
           }
         }
       }
@@ -154,6 +162,16 @@ resource aws_secretsmanager_secret grpc_cacert {
 resource aws_secretsmanager_secret_version grpc_cacert {
   secret_id     = aws_secretsmanager_secret.grpc_cacert.id
   secret_string = base64encode(tls_self_signed_cert.ca.cert_pem)
+}
+
+resource aws_secretsmanager_secret sentry_client_dsn {
+  name = "${var.project}-sentry-client-dsn"
+  recovery_window_in_days = 0
+}
+
+resource aws_secretsmanager_secret_version sentry_client_dsn {
+  secret_id     = aws_secretsmanager_secret.sentry_client_dsn.id
+  secret_string = var.sentry_client_dsn
 }
 
 ################################################################

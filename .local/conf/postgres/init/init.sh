@@ -26,4 +26,22 @@ psql -v ON_ERROR_STOP=1 --username postgres --dbname postgres <<-EOSQL
   INSERT INTO stocks (code, name, total_stock_count) VALUES ('IBE', 'ibex', 211000000);
   INSERT INTO stocks (code, name, total_stock_count) VALUES ('URC', 'urchin', 618000000);
   INSERT INTO stocks (code, name, total_stock_count) VALUES ('DRA', 'drake', 374000000);
+
+  CREATE TABLE "subject"
+  (
+      "id"      BIGSERIAL PRIMARY KEY,
+      "title"   VARCHAR(100) unique,
+      "enabled" BOOL DEFAULT true
+  );
+
+  CREATE TABLE "question"
+  (
+      "id"         BIGSERIAL PRIMARY KEY,
+      "question"   TEXT      NOT NULL,
+      "subject_id" BIGSERIAL NOT NULL,
+      "likes"      BIGINT DEFAULT 0,
+      FOREIGN KEY (subject_id) REFERENCES subject (id)
+          ON UPDATE CASCADE ON DELETE CASCADE
+  );
+
 EOSQL

@@ -1,6 +1,8 @@
-import { credentials } from "@grpc/grpc-js";
-import { procedure, router } from '../trpc'
-import { Stock, TradingClient } from "~/grpc/trading";
+import {credentials, Metadata} from '@grpc/grpc-js';
+import * as Sentry from '@sentry/nextjs';
+import {z} from 'zod';
+import {BoardClient, Question, Subject} from '~/grpc/board';
+import {procedure, router} from '../trpc';
 
 const host = process.env.GRPC_HOST || '127.0.0.1';
 const port = process.env.GRPC_PORT || '9095';
@@ -18,22 +20,111 @@ console.log('GRPC_INSECURE: ', process.env.GRPC_INSECURE || 'false');
 console.log('GRPC_HOST_OVERRIDE: ', process.env.GRPC_HOST_OVERRIDE || '');
 console.log('GRPC_OPTIONS: ', opts);
 
-const trading = new TradingClient(`${host}:${port}`, creds, opts);
+const board = new BoardClient(`${host}:${port}`, creds, opts);
 
 export const appRouter = router({
-    getStockList: procedure.query(async (): Promise<Stock[]> => {
-        const stocks: Promise<Stock[]> = new Promise((resolve, reject) => {
-            trading.getStockList({}, (err, stockListResp) => {
+    listSubjects: procedure.query(async (): Promise<Subject[]> => {
+
+        const parentSpan = Sentry.getCurrentHub().getScope().getSpan();
+        const span = parentSpan && parentSpan.startChild({
+            op: 'grpc.client',
+            description: '/board.Board/ListSubjects',
+        });
+
+        const subjects: Promise<Subject[]> = new Promise((resolve, reject) => {
+
+            const metadata = new Metadata();
+            if (span) {
+                metadata.set('traceid', span.traceId);
+                metadata.set('spanid', span.spanId);
+            }
+
+            board.listSubjects({}, metadata, (err, subjectList) => {
                 if (err) {
+                    Sentry.captureException(err)
+                    span && span.setStatus('unknown_error').finish();
+                    reject(err);
+                }
+
+                span && span.setStatus('ok').finish();
+                resolve(subjectList.subjectList);
+            });
+        });
+        return subjects;
+    }),
+
+    getSubject: procedure.input(
+        z.object({
+            id: z.number(),
+        })
+    ).query(async ({input}): Promise<Subject> => {
+        const subject: Promise<Subject> = new Promise((resolve, reject) => {
+            board.getSubject(input, (err, subject) => {
+                if (err) {
+                    Sentry.captureException(err)
                     console.error(err);
                     reject(err);
                     return;
                 }
 
-                resolve(stockListResp.stockList);
+                resolve(subject);
             });
         });
-        return stocks;
+        return subject;
+    }),
+
+    listQuestions: procedure.input(
+        z.object({
+            id: z.number(),
+        })
+    ).query(async ({input}): Promise<Question[]> => {
+        const questions: Promise<Question[]> = new Promise((resolve, reject) => {
+            board.listQuestions(input, (err, questionList) => {
+                if (err) {
+                    Sentry.captureException(err)
+                    console.error(err);
+                    reject(err);
+                    return;
+                }
+
+                resolve(questionList.questionList);
+            });
+        });
+        return questions;
+    }),
+
+    createQuestion: procedure.input(
+        z.object({
+            question: z.string(),
+            subjectId: z.number(),
+        })
+    ).mutation(async ({input: newQuestion}) => {
+        new Promise((resolve, reject) => {
+            board.createQuestion(newQuestion, (err, question) => {
+                if (err) {
+                    Sentry.captureException(err)
+                    console.error(err);
+                    reject(err);
+                    return;
+                }
+            });
+        });
+    }),
+
+    like: procedure.input(
+        z.object({
+            id: z.number(),
+        })).mutation(async ({input}) => {
+        new Promise((resolve, reject) => {
+            board.like(input, (err, empty) => {
+                if (err) {
+                    Sentry.captureException(err)
+                    console.error(err);
+                    reject(err);
+                    return;
+                }
+            });
+        });
     }),
 });
 
