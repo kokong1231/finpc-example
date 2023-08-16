@@ -35,6 +35,9 @@ export const appRouter = router({
 
             const metadata = new Metadata();
             if (span) {
+                metadata.set("traceid", span.traceId)
+                metadata.set("spanid", span.spanId)
+
                 const tp = `00-${span.traceId}-${span.spanId}-01`;
                 metadata.set('traceparent', tp);
             }

@@ -46,7 +46,7 @@ export default function Home() {
                 <button onClick={doRefresh}>Refresh</button>
                 <ul>
                     {list.data && list.data.map(q => {
-                        return (<li key="{q.id}">
+                        return (<li key={"q.id"}>
                             {q.question}&nbsp;&nbsp;
                             ({q.likesCount})&nbsp;&nbsp;
                             <button onClick={() => {
