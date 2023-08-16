@@ -35,14 +35,25 @@ func SentryStreamInterceptor() grpc.StreamServerInterceptor {
 			s.Op = "grpc.server"
 			s.Description = info.FullMethod
 
-			traceParent := metadata.ValueFromIncomingContext(ctx, tpKey)
-			if traceParent != nil && len(traceParent) != 0 {
-				log.Info("[gRPC][Metadata] ", tpKey, ": ", traceParent[0])
-
-				_, err := hex.Decode(s.TraceID[:], []byte(traceParent[0]))
+			traceId := metadata.ValueFromIncomingContext(ctx, "traceid")
+			if traceId != nil && len(traceId) != 0 {
+				_, err := hex.Decode(s.TraceID[:], []byte(traceId[0]))
 				if err != nil {
 					sentry.CaptureException(err)
 				}
+			}
+
+			spanParent := metadata.ValueFromIncomingContext(ctx, "spanid")
+			if spanParent != nil && len(spanParent) != 0 {
+				_, err := hex.Decode(s.ParentSpanID[:], []byte(spanParent[0]))
+				if err != nil {
+					sentry.CaptureException(err)
+				}
+			}
+
+			traceParent := metadata.ValueFromIncomingContext(ctx, tpKey)
+			if traceParent != nil && len(traceParent) != 0 {
+				log.Info("[gRPC][Metadata] ", tpKey, ": ", traceParent[0])
 			}
 		})
 
@@ -74,14 +85,25 @@ func SentryUnaryServerInterceptor() grpc.UnaryServerInterceptor {
 			s.Op = "grpc.server"
 			s.Description = info.FullMethod
 
-			traceParent := metadata.ValueFromIncomingContext(ctx, tpKey)
-			if traceParent != nil && len(traceParent) != 0 {
-				log.Info("[gRPC][Metadata] ", tpKey, ": ", traceParent[0])
-
-				_, err := hex.Decode(s.ParentSpanID[:], []byte(traceParent[0]))
+			traceId := metadata.ValueFromIncomingContext(ctx, "traceid")
+			if traceId != nil && len(traceId) != 0 {
+				_, err := hex.Decode(s.TraceID[:], []byte(traceId[0]))
 				if err != nil {
 					sentry.CaptureException(err)
 				}
+			}
+
+			spanParent := metadata.ValueFromIncomingContext(ctx, "spanid")
+			if spanParent != nil && len(spanParent) != 0 {
+				_, err := hex.Decode(s.ParentSpanID[:], []byte(spanParent[0]))
+				if err != nil {
+					sentry.CaptureException(err)
+				}
+			}
+
+			traceParent := metadata.ValueFromIncomingContext(ctx, tpKey)
+			if traceParent != nil && len(traceParent) != 0 {
+				log.Info("[gRPC][Metadata] ", tpKey, ": ", traceParent[0])
 			}
 		})
 

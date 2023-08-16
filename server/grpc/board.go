@@ -18,7 +18,6 @@ type Board struct {
 func (b *Board) ListSubjects(ctx context.Context, empty *emptypb.Empty) (*SubjectList, error) {
 	tx := sentry.TransactionFromContext(ctx)
 	span := tx.StartChild("/board.Board/ListSubjects")
-	span.Status = sentry.SpanStatusOK
 	defer span.Finish()
 
 	db := ctx.Value(DBSession).(*sql.DB)
@@ -55,6 +54,10 @@ func (b *Board) ListSubjects(ctx context.Context, empty *emptypb.Empty) (*Subjec
 }
 
 func (b *Board) GetSubject(ctx context.Context, subjectId *SubjectId) (*Subject, error) {
+	tx := sentry.TransactionFromContext(ctx)
+	span := tx.StartChild("/board.Board/GetSubject")
+	defer span.Finish()
+
 	db := ctx.Value(DBSession).(*sql.DB)
 
 	rows, err := db.Query("SELECT id, title, enabled FROM subject WHERE id = $1", subjectId.Id)
@@ -77,6 +80,10 @@ func (b *Board) GetSubject(ctx context.Context, subjectId *SubjectId) (*Subject,
 }
 
 func (b *Board) CreateQuestion(ctx context.Context, newQuestion *NewQuestion) (*emptypb.Empty, error) {
+	tx := sentry.TransactionFromContext(ctx)
+	span := tx.StartChild("/board.Board/CreateQuestion")
+	defer span.Finish()
+
 	db := ctx.Value(DBSession).(*sql.DB)
 
 	subject, err := selectSubject(db, newQuestion.SubjectId)
@@ -111,6 +118,10 @@ func (b *Board) CreateQuestion(ctx context.Context, newQuestion *NewQuestion) (*
 }
 
 func (b *Board) ListQuestions(ctx context.Context, subjectId *SubjectId) (*QuestionList, error) {
+	tx := sentry.TransactionFromContext(ctx)
+	span := tx.StartChild("/board.Board/ListQuestions")
+	defer span.Finish()
+
 	db := ctx.Value(DBSession).(*sql.DB)
 
 	rows, err := db.Query(
@@ -148,6 +159,10 @@ func (b *Board) ListQuestions(ctx context.Context, subjectId *SubjectId) (*Quest
 }
 
 func (b *Board) Like(ctx context.Context, questionId *QuestionId) (*emptypb.Empty, error) {
+	tx := sentry.TransactionFromContext(ctx)
+	span := tx.StartChild("/board.Board/Like")
+	defer span.Finish()
+
 	db := ctx.Value(DBSession).(*sql.DB)
 
 	if err := addQuestionLikes(db, questionId.Id); err != nil {
@@ -159,6 +174,10 @@ func (b *Board) Like(ctx context.Context, questionId *QuestionId) (*emptypb.Empt
 }
 
 func (b *Board) Unlike(ctx context.Context, questionId *QuestionId) (*emptypb.Empty, error) {
+	tx := sentry.TransactionFromContext(ctx)
+	span := tx.StartChild("/board.Board/Unlike")
+	defer span.Finish()
+
 	db := ctx.Value(DBSession).(*sql.DB)
 
 	question, err := selectQuestion(db, questionId.Id)
