@@ -2,6 +2,7 @@
 ##
 ##  AWS EC2 - Bastian server
 ##
+################################################################
 
 data aws_ami bastian {
   most_recent = true
